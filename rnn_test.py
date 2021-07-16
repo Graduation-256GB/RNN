@@ -1,14 +1,13 @@
 import tensorflow as tf
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
 # 7.20 데이터 로드 및 확인
 # 데이터를 메모리에 불러옵니다. encoding 형식으로 utf-8 을 지정해야합니다.
-train_text = open('pose256GB_20.csv', 'rb').read().decode(encoding='utf-8')
+train_text = open('./dataset/pose256GB_20.csv', 'rb').read().decode(encoding='utf-8')
 # train_text = open(path_to_train_file, 'rb').read().decode(encoding='utf-8')
-test_text = open('pose256GB_20.csv', 'rb').read().decode(encoding='utf-8')
+test_text = open('./dataset/test_pose256GB.csv', 'rb').read().decode(encoding='utf-8')
 
 # 텍스트가 총 몇 자인지 확인합니다.
 print('Length of text: {} characters'.format(len(train_text)))
@@ -21,14 +20,21 @@ train_Y = [[row.split(',')[15]] for row in train_text.split('\r')[19::20]]
 test_Y = [[row.split(',')[15]] for row in test_text.split('\r')[19::20]]
 
 # 운동 이름을 정수로 변경
-list=[]
+train_ylist=[]
 for y_train in train_Y:
     for y in y_train:
         y=y.replace('squat','0').replace('running','1')
-        list.append([int(y)])
+        train_ylist.append([int(y)])
 
-train_Y=np.array(list)
-test_Y=train_Y
+train_Y=np.array(train_ylist)
+
+test_ylist=[]
+for y_test in test_Y:
+    for y in y_test:
+        y=y.replace('squat','0').replace('running','1')
+        test_ylist.append([int(y)])
+
+test_Y=np.array(test_ylist)
 
 print("여기까지 ok")
 print(train_Y)
@@ -37,20 +43,28 @@ print(train_Y.shape, test_Y.shape)
 
 # 7.22 train 데이터의 입력(X)에 대한 정제(Cleaning)
 #### 수정 -> 줄바꿈 기호 없애고 빈 문자가 아닌 경우에만 데이터에 추가
-list2=[]
+train_xlist=[]
 for row in train_text.split('\n')[0:]:
     list=row.split(',')[0:15]
     for i in list:
         if i!='':
-            list2.append(i)
-train_X=np.array(list2)
-# train_text_X= np.array([row.split(',')[0:15] for row in train_text.split('\n')[0:]])
-# train_X= np.array([row.split(',')[0:15] for row in train_text.split('\n')[0:]])
+            train_xlist.append(i)
+train_X=np.array(train_xlist)
 train_X=train_X.reshape(2,20,15).astype(float)
-train_text_X=train_X
+
+test_xlist=[]
+for row in test_text.split('\n')[0:]:
+    list=row.split(',')[0:15]
+    for i in list:
+        if i!='':
+            test_xlist.append(i)
+test_X=np.array(test_xlist)
+test_X=test_X.reshape(2,20,15).astype(float)
+
 
 print("X 확인")
 print(train_X)
+print(test_X)
 # # train_X 만들기
 
 
@@ -96,8 +110,6 @@ plt.show()
 ##test_X= [row.split(',')[0:15] for row in train_text.split('\n')[0:]]
 
 #### 수정 -> train과 동일한 형태로 바꿈
-test_text_X = train_text_X
-test_X = train_X
 
 # 테스트 정확도 측정
 print("테스트 정확도 측정 시작")
