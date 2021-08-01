@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorflowjs as tfjs
 import pandas as pd
 
 # 7.20 데이터 로드 및 확인
@@ -119,3 +120,9 @@ print("테스트 정확도 측정 종료")
 
 prediction=model.predict(test_X)
 print(prediction)
+
+# model_json = model.to_json()
+# with open("model.json", "w") as json_file :
+#     json_file.write(model_json)
+
+tfjs.converters.save_keras_model(model,'dataset')
