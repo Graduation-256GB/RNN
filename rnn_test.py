@@ -25,12 +25,15 @@ train_text = open('./dataset/jsontocsv.csv', 'rb').read().decode(encoding='utf-8
 test_text = open('./dataset/jsontocsv.csv', 'rb').read().decode(encoding='utf-8')
 
 # 연속 프레임 개수
-n_steps=16
+n_steps = 16
+
+# label_value
+label_value = {1: 0, 33: 1, 49: 2, 81: 3, 113: 4, 145: 5, 177: 6, 185: 7}
 
 # 텍스트가 총 몇 자인지 확인합니다.
-print('Length of text: {} characters'.format(len(train_text)))
-print('Length of text: {} characters'.format(len(test_text)))
-print()
+## ## print('Length of text: {} characters'.format(len(train_text)))
+## ## print('Length of text: {} characters'.format(len(test_text)))
+## ## print()
 
 # 7.21 학습을 위한 정답 데이터(Y) 만들기
 #### 수정 -> 20개의 데이터 당 하나의 y값을 주기 위해서 바꿈 [[1] [0]]
@@ -64,12 +67,15 @@ print("여기까지 ok")
 
 # 7.22 train 데이터의 입력(X)에 대한 정제(Cleaning)
 #### 수정 -> 줄바꿈 기호 없애고 빈 문자가 아닌 경우에만 데이터에 추가
-train_xlist=[]
-train_x=train_text.split('\n')[0:]
-blocks=int(len(train_x)/n_steps)
+train_xlist = []
+train_x = train_text.split('\n')[0:]
+
+## 구분되는 일련의 동작 수
+blocks_train = int(len(train_x)/n_steps)
+## ## print(blocks_train)
 
 for row in train_x:
-    list=row.split(',')[0:15]
+    list = row.split(',')[0:15]
     for i in list:
         if i!='':
             train_xlist.append(i)
@@ -77,13 +83,18 @@ train_X=np.array(train_xlist)
 train_X=train_X.reshape(blocks,n_steps,15).astype(float)
 
 test_xlist=[]
-for row in test_text.split('\n')[0:]:
-    list=row.split(',')[0:15]
+test_x = test_text.split('\n')[0:]
+
+blocks_test = int(len(test_x)/n_steps)
+## ## print(blocks_test)
+
+for row in test_x:
+    list = row.split(',')[0:15]
     for i in list:
-        if i!='':
+        if i != '':
             test_xlist.append(i)
-test_X=np.array(test_xlist)
-test_X=test_X.reshape(blocks,n_steps,15).astype(float)
+test_X = np.array(test_xlist)
+test_X = test_X.reshape(blocks_test, n_steps, 15).astype(float)
 
 
 print("X 확인")
@@ -132,15 +143,13 @@ plt.legend()
 
 plt.show()
 
-##test_text_X= [row.split(',')[0:15] for row in train_text.split('\r')[0:]]
-##test_X= [row.split(',')[0:15] for row in train_text.split('\n')[0:]]
-
 #### 수정 -> train과 동일한 형태로 바꿈
 
 # 테스트 정확도 측정
-print("테스트 정확도 측정 시작")
-model.evaluate(test_X, test_Y, verbose=1)
-print("테스트 정확도 측정 종료")
+print("\n 테스트 정확도 측정 시작")
+score = model.evaluate(test_X, test_Y, verbose=1)[1]
+print("Test Accuracy: %.4f" % (score))
+print(" 테스트 정확도 측정 종료\n")
 
 
 prediction=model.predict(test_X)
