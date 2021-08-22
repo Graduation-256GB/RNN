@@ -5,6 +5,7 @@ import sklearn
 import tensorflow as tf
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, plot_confusion_matrix
 import matplotlib.pyplot as plt
 from IPython.display import SVG
@@ -20,9 +21,9 @@ from pasta.augment import inline
 # X_train, X_test, y_train, y_test = train_test_split(dataset, y, test_size = 0.2, random_state = 42, shuffle = True)
 
 
-train_text = open('./dataset/jsontocsv.csv', 'rb').read().decode(encoding='utf-8')
+datafile = open('./dataset/jsontocsv.csv', 'rb').read().decode(encoding='utf-8')
 # train_text = open(path_to_train_file, 'rb').read().decode(encoding='utf-8')
-test_text = open('./dataset/jsontocsv.csv', 'rb').read().decode(encoding='utf-8')
+# test_text = open('./dataset/jsontocsv.csv', 'rb').read().decode(encoding='utf-8')
 
 # 연속 프레임 개수
 n_steps = 16
@@ -37,29 +38,29 @@ label_value = {1: 0, 33: 1, 49: 2, 81: 3, 113: 4, 145: 5, 177: 6, 185: 7}
 
 # 7.21 학습을 위한 정답 데이터(Y) 만들기
 #### 수정 -> 20개의 데이터 당 하나의 y값을 주기 위해서 바꿈 [[1] [0]]
-train_Y = [[row.split(',')[15]] for row in train_text.split('\r')[15::16]]
-test_Y = [[row.split(',')[15]] for row in test_text.split('\r')[15::16]]
-label_value = {1: 0, 33: 1, 49: 2, 81: 3, 113: 4, 145: 5, 177: 6, 185:7}
+data_Y = [[row.split(',')[15]] for row in datafile.split('\r')[15::16]]
+# test_Y = [[row.split(',')[15]] for row in test_text.split('\r')[15::16]]
 label=['1', '33', '49', '81', '113','145','177','185']
 
 # 운동 이름을 정수로 변경
 train_ylist=[]
-for y_train in train_Y:
+for y_train in data_Y:
     for y in y_train:
         train_ylist.append([label_value[int(y)]])
 
-train_Y=np.array(train_ylist)
+data_Y=np.array(train_ylist)
 
-test_ylist=[]
-for y_test in test_Y:
-    for y in y_test:
-        test_ylist.append([label_value[int(y)]])
+# test_ylist=[]
+# for y_test in test_Y:
+#     for y in y_test:
+#         test_ylist.append([label_value[int(y)]])
 
-test_Y=np.array(test_ylist)
+# test_Y=np.array(test_ylist)
 
-class_num=len(np.unique(train_Y))
+class_num=len(np.unique(data_Y))
 
 print("여기까지 ok")
+# print(data_Y)
 # print(train_Y)
 # print(test_Y)
 # print(train_X.shape, test_X.shape)
@@ -68,40 +69,48 @@ print("여기까지 ok")
 # 7.22 train 데이터의 입력(X)에 대한 정제(Cleaning)
 #### 수정 -> 줄바꿈 기호 없애고 빈 문자가 아닌 경우에만 데이터에 추가
 train_xlist = []
-train_x = train_text.split('\n')[0:]
+data_X = datafile.split('\n')[0:]
 
 ## 구분되는 일련의 동작 수
-blocks_train = int(len(train_x)/n_steps)
+blocks_train = int(len(data_X)/n_steps)
 ## ## print(blocks_train)
 
-for row in train_x:
+for row in data_X:
     list = row.split(',')[0:15]
     for i in list:
         if i!='':
             train_xlist.append(i)
-train_X=np.array(train_xlist)
-train_X=train_X.reshape(blocks,n_steps,15).astype(float)
+data_X=np.array(train_xlist)
+data_X=data_X.reshape(blocks_train,n_steps,15).astype(float)
 
-test_xlist=[]
-test_x = test_text.split('\n')[0:]
-
-blocks_test = int(len(test_x)/n_steps)
-## ## print(blocks_test)
-
-for row in test_x:
-    list = row.split(',')[0:15]
-    for i in list:
-        if i != '':
-            test_xlist.append(i)
-test_X = np.array(test_xlist)
-test_X = test_X.reshape(blocks_test, n_steps, 15).astype(float)
+# test_xlist=[]
+# test_x = test_text.split('\n')[0:]
+#
+# blocks_test = int(len(test_x)/n_steps)
+# ## ## print(blocks_test)
+#
+# for row in test_x:
+#     list = row.split(',')[0:15]
+#     for i in list:
+#         if i != '':
+#             test_xlist.append(i)
+# test_X = np.array(test_xlist)
+# test_X = test_X.reshape(blocks_test, n_steps, 15).astype(float)
 
 
 print("X 확인")
+# print(data_X)
 # print(train_X)
 # print(test_X)
 # # train_X 만들기
 # print(train_X.shape, test_X.shape)
+
+x_train, x_test, y_train, y_test = train_test_split(data_X, data_Y, random_state=66, test_size=0.4)
+x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, random_state=66, test_size=0.5)
+# print(x_train,len(x_train))
+# print(x_test,len(x_test))
+# print(y_train,len(y_train))
+# print(y_test,len(y_test))
 
 
 print("모델 시작")
@@ -123,7 +132,7 @@ model = tf.keras.Sequential([
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 model.summary()
 
-history = model.fit(train_X, train_Y, epochs=50, batch_size=128, validation_split=0.2)
+history = model.fit(x_train, y_train, epochs=200, batch_size=128, validation_split=0.2, validation_data=(x_val, y_val))
 
 plt.figure(figsize=(12, 4))
 
@@ -147,12 +156,12 @@ plt.show()
 
 # 테스트 정확도 측정
 print("\n 테스트 정확도 측정 시작")
-score = model.evaluate(test_X, test_Y, verbose=1)[1]
+score = model.evaluate(x_test, y_test, verbose=1)[1]
 print("Test Accuracy: %.4f" % (score))
 print(" 테스트 정확도 측정 종료\n")
+print("len(x_test):",len(x_test))
 
-
-prediction=model.predict(test_X)
+prediction=model.predict(x_test)
 print(prediction)
 
 # plot = plot_confusion_matrix(model, # 분류 모델
@@ -172,7 +181,7 @@ print(prediction)
 # model.save("my_model.h5")
 
 
-confusion_matrix = sklearn.metrics.confusion_matrix(test_Y, np.argmax(prediction, axis = 1))
+confusion_matrix = sklearn.metrics.confusion_matrix(y_test, np.argmax(prediction, axis = 1))
 print(confusion_matrix)
 
 width = 8
